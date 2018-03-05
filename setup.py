@@ -234,7 +234,7 @@ setup_dict = dict(
     url=metadata.url,
     include_package_data=True,
     description=metadata.description,
-    long_description=read('README.rst'),
+    long_description=read('README.md'),
     # Find a list of classifiers here:
     # <http://pypi.python.org/pypi?%3Aaction=list_classifiers>
     classifiers=[
@@ -244,10 +244,7 @@ setup_dict = dict(
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: Implementation :: PyPy',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Documentation',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: System :: Installation/Setup',
