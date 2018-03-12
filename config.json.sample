@@ -57,7 +57,7 @@
     },
     "pusher": {
         "common": "set enable to 1, if you want to subscribe data from pusher service",
-        "enable": "1",
+        "enable": 0,
         "user": "",
         "password": ""
     }
