@@ -250,9 +250,8 @@ if __name__ == "__main__":
 
     bts_price = BTSPriceAfterMatch(exchange_data)
 
-    @asyncio.coroutine
-    def task_compute_price():
-        yield from asyncio.sleep(1)
+    async def task_compute_price():
+        await asyncio.sleep(1)
         while True:
             volume, volume_sum, real_price = bts_price.compute_price(
                 spread=0.01)
@@ -265,7 +264,7 @@ if __name__ == "__main__":
                 print("efficent depth : %s" % valid_depth)
             else:
                 print("can't get valid market order")
-            yield from asyncio.sleep(10)
+            await asyncio.sleep(10)
     loop.create_task(task_compute_price())
     loop.run_forever()
     loop.close()

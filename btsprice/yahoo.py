@@ -13,10 +13,6 @@ def is_float_try(str):
 
 class Yahoo(object):
     def __init__(self):
-        header = {
-            'content-type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 Gecko/20100101 Firefox/22.0'}
-        self.session = aiohttp.ClientSession(headers=header)
         self.param_s = {}
         self.quote = {}
         self.scale = {}
@@ -25,6 +21,12 @@ class Yahoo(object):
         self.init_param_dict3()
         self.rate = {'CNY': {'CNY': 1.0}, 'USD': {'USD': 1.0}}
 
+    def create_session(self):
+        header = {
+            'content-type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 Gecko/20100101 Firefox/22.0'}
+        return aiohttp.ClientSession(headers=header)
+        
     def init_param_dict1(self):
         assets = ["CNY", "KRW", "TRY", "SGD", "HKD", "RUB", "SEK", "NZD",
                   "MXN", "CAD", "CHF", "AUD", "GBP", "JPY", "EUR", "BTC", "ARS"]
@@ -62,16 +64,15 @@ class Yahoo(object):
         params = {'s': query_string, 'f': 'l1', 'e': '.csv'}
         return params
 
-    @asyncio.coroutine
-    def fetch_price(self, assets=None):
+    async def fetch_price(self, session, assets=None):
         if assets is None:
             assets = self.param_s.keys()
         url = "http://download.finance.yahoo.com/d/quotes.csv"
         try:
             params = self.get_query_param(assets)
-            response = yield from asyncio.wait_for(self.session.get(
+            response = await asyncio.wait_for(session.get(
                 url, params=params), 120)
-            response = yield from response.read()
+            response = await response.read()
             price = dict(zip(assets, response.split()))
             for asset in assets:
                 if is_float_try(price[asset]):
@@ -98,7 +99,10 @@ class Yahoo(object):
         return self.rate
 
 if __name__ == "__main__":
+    async def main(yahoo):
+        async with yahoo.create_session() as session:
+            await yahoo.fetch_price(session)
     loop = asyncio.get_event_loop()
     yahoo = Yahoo()
-    loop.run_until_complete(yahoo.fetch_price())
-    loop.run_forever()
+    loop.run_until_complete(main(yahoo))
+    loop.close()

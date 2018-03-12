@@ -280,8 +280,7 @@ class FeedPrice(object):
             self.logger.info("publish feeds: %s" % feed_need_publish)
             self.feedapi.publish_feed(feed_need_publish)
 
-    @asyncio.coroutine
-    def run_task(self):
+    async def run_task(self):
         config_timer = int(self.config["timer_minute"])*60
         while True:
             try:
@@ -295,7 +294,7 @@ class FeedPrice(object):
                 timer = config_timer
             else:
                 timer = 3
-            yield from asyncio.sleep(timer)
+            await asyncio.sleep(timer)
 
     def execute(self):
         loop = asyncio.get_event_loop()

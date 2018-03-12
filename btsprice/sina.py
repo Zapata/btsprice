@@ -14,16 +14,18 @@ def is_float_try(str):
 
 class Sina(object):
     def __init__(self):
-        header = {
-            'content-type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 Gecko/20100101 Firefox/22.0'}
-        self.session = aiohttp.ClientSession(headers=header)
         self.param_s = {}
         self.quote = {}
         self.scale = {}
         self.init_param_dict1()
         self.init_param_dict2()
         self.rate = {'CNY': {'CNY': 1.0}, 'USD': {'USD': 1.0}}
+
+    def create_session(self):
+        header = {
+            'content-type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 Gecko/20100101 Firefox/22.0'}
+        return aiohttp.ClientSession(headers=header)
 
     def init_param_dict1(self):
         assets = ["CNY", "KRW", "TRY", "SGD", "HKD", "RUB", "SEK", "NZD",
@@ -48,16 +50,15 @@ class Sina(object):
             '%s' % (self.param_s[asset]) for asset in assets)
         return query_string
 
-    @asyncio.coroutine
-    def fetch_price(self, assets=None):
+    async def fetch_price(self, session, assets=None):
         if assets is None:
             assets = self.param_s.keys()
         url = "http://hq.sinajs.cn/list="
         try:
             params = self.get_query_param(assets)
-            response = yield from asyncio.wait_for(self.session.get(
+            response = await asyncio.wait_for(session.get(
                 url+params), 120)
-            response = yield from response.read()
+            response = await response.read()
             # print(response)
             price_info = dict(zip(assets, response.decode("gbk").splitlines()))
             price = {}
@@ -87,11 +88,14 @@ class Sina(object):
                     raise
         except Exception as e:
             print("Error fetching results from sina!", e)
-        # print(self.rate)
+        #print(self.rate)
         return self.rate
 
 if __name__ == "__main__":
+    async def main(sina):
+        async with sina.create_session() as session:
+            await sina.fetch_price(session)
     loop = asyncio.get_event_loop()
     sina = Sina()
-    loop.run_until_complete(sina.fetch_price())
-    loop.run_forever()
+    loop.run_until_complete(main(sina))
+    loop.close()

@@ -22,13 +22,12 @@ class TaskExchanges(object):
     def set_period(self, sec):
         self.period = sec
 
-    @asyncio.coroutine
-    def fetch_orderbook(self, name, quote, coro, *args):
+    async def fetch_orderbook(self, name, quote, coro, *args):
         time_end = int(time.time())
         orderbook = self.data["orderbook"]
         while True:
             time_begin = time_end
-            _orderbook = yield from coro(*args)
+            _orderbook = await coro(*args)
             time_end = int(time.time())
             if _orderbook:
                 orderbook[name] = _orderbook
@@ -41,15 +40,14 @@ class TaskExchanges(object):
             if time_left <= 1:
                 time_left = 1
             time_end += time_left
-            yield from asyncio.sleep(time_left)
+            await asyncio.sleep(time_left)
 
-    @asyncio.coroutine
-    def fetch_ticker(self, name, quote, coro, *args):
+    async def fetch_ticker(self, name, quote, coro, *args):
         time_end = int(time.time())
         ticker = self.data["ticker"]
         while True:
             time_begin = time_end
-            _ticker = yield from coro(*args)
+            _ticker = await coro(*args)
             time_end = int(time.time())
             if _ticker:
                 _ticker["quote"] = quote
@@ -62,45 +60,45 @@ class TaskExchanges(object):
             if time_left <= 1:
                 time_left = 1
             time_end += time_left
-            yield from asyncio.sleep(time_left)
+            await asyncio.sleep(time_left)
 
-    @asyncio.coroutine
-    def fetch_yahoo_rate(self):
+    async def fetch_yahoo_rate(self):
         time_end = int(time.time())
-        rate = self.data["rate"]
-        while True:
-            time_begin = time_end
-            _rate = yield from self.yahoo.fetch_price()
-            time_end = int(time.time())
-            if _rate:
-                _rate["time"] = time_end
-                rate["yahoo"] = _rate
-                if self.handler:
-                    self.handler("rate", "yahoo", _rate)
-            time_left = self.period - (time_end - time_begin)
-            if time_left <= 1:
-                time_left = 1
-            time_end += time_left
-            yield from asyncio.sleep(time_left)
+        async with self.yahoo.create_session() as session:
+            rate = self.data["rate"]
+            while True:
+                time_begin = time_end
+                _rate = await self.yahoo.fetch_price(session)
+                time_end = int(time.time())
+                if _rate:
+                    _rate["time"] = time_end
+                    rate["yahoo"] = _rate
+                    if self.handler:
+                        self.handler("rate", "yahoo", _rate)
+                time_left = self.period - (time_end - time_begin)
+                if time_left <= 1:
+                    time_left = 1
+                time_end += time_left
+                await asyncio.sleep(time_left)
 
-    @asyncio.coroutine
-    def fetch_sina_rate(self):
+    async def fetch_sina_rate(self):
         time_end = int(time.time())
-        rate = self.data["rate"]
-        while True:
-            time_begin = time_end
-            _rate = yield from self.sina.fetch_price()
-            time_end = int(time.time())
-            if _rate:
-                _rate["time"] = time_end
-                rate["Sina"] = _rate
-                if self.handler:
-                    self.handler("rate", "Sina", _rate)
-            time_left = self.period - (time_end - time_begin)
-            if time_left <= 1:
-                time_left = 1
-            time_end += time_left
-            yield from asyncio.sleep(time_left)
+        async with self.sina.create_session() as session:
+            rate = self.data["rate"]
+            while True:
+                time_begin = time_end
+                _rate = await self.sina.fetch_price(session)
+                time_end = int(time.time())
+                if _rate:
+                    _rate["time"] = time_end
+                    rate["Sina"] = _rate
+                    if self.handler:
+                        self.handler("rate", "Sina", _rate)
+                time_left = self.period - (time_end - time_begin)
+                if time_left <= 1:
+                    time_left = 1
+                time_end += time_left
+                await asyncio.sleep(time_left)
 
     def run_tasks_ticker(self, loop):
         return [
@@ -186,9 +184,10 @@ class TaskExchanges(object):
             ]
 
     def run_tasks(self, loop):
+        loop.run_until_complete(self.exchanges.init_session())
         return [
                 loop.create_task(self.fetch_yahoo_rate()),
-                loop.create_task(self.fetch_sina_rate())
+                loop.create_task(self.fetch_sina_rate()),
                 ] + \
             self.run_tasks_orderbook(loop) + \
             self.run_tasks_ticker(loop)
@@ -200,8 +199,7 @@ if __name__ == "__main__":
     task_exchanges.set_period(20)
     tasks = task_exchanges.run_tasks(loop)
 
-    @asyncio.coroutine
-    def task_display():
+    async def task_display():
         my_data = task_exchanges.data
         while True:
             for _type in my_data:
@@ -209,7 +207,7 @@ if __name__ == "__main__":
                     if "done" not in my_data[_type][_name]:
                         print("got %s: %s" % (_type, _name))
                         my_data[_type][_name]["done"] = None
-            yield from asyncio.sleep(1)
+            await asyncio.sleep(1)
     tasks += [loop.create_task(task_display())]
     loop.run_until_complete(asyncio.wait(tasks))
     loop.run_forever()
