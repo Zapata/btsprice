@@ -142,18 +142,24 @@ class TaskExchanges(object):
 
     def run_tasks_orderbook(self, loop):
         return [
-            loop.create_task(self.fetch_orderbook(
-                "btsbots_cny", "CNY",
-                self.exchanges.orderbook_btsbots, "CNY", "BTS")),
-            loop.create_task(self.fetch_orderbook(
-                "btsbots_usd", "USD",
-                self.exchanges.orderbook_btsbots, "USD", "BTS")),
-            loop.create_task(self.fetch_orderbook(
-                "btsbots_open.btc", "BTC",
-                self.exchanges.orderbook_btsbots, "OPEN.BTC", "BTS")),
+            # loop.create_task(self.fetch_orderbook(
+            #     "btsbots_cny", "CNY",
+            #     self.exchanges.orderbook_btsbots, "CNY", "BTS")),
+            # loop.create_task(self.fetch_orderbook(
+            #     "btsbots_usd", "USD",
+            #     self.exchanges.orderbook_btsbots, "USD", "BTS")),
+            # loop.create_task(self.fetch_orderbook(
+            #     "btsbots_open.btc", "BTC",
+            #     self.exchanges.orderbook_btsbots, "OPEN.BTC", "BTS")),
             loop.create_task(self.fetch_orderbook(
                 "aex_btc", "BTC",
                 self.exchanges.orderbook_aex, "btc", "bts")),
+            loop.create_task(self.fetch_orderbook(
+                "aex_bitcny", "CNY",
+                self.exchanges.orderbook_aex, "bitcny", "bts")),
+            loop.create_task(self.fetch_orderbook(
+                "aex_bitusd", "USD",
+                self.exchanges.orderbook_aex, "bitusd", "bts")),
             loop.create_task(self.fetch_orderbook(
                 "zb_btc", "BTC",
                 self.exchanges.orderbook_zb, "btc", "bts")),
@@ -197,18 +203,13 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     task_exchanges = TaskExchanges()
     task_exchanges.set_period(20)
-    tasks = task_exchanges.run_tasks(loop)
 
-    async def task_display():
-        my_data = task_exchanges.data
-        while True:
-            for _type in my_data:
-                for _name in my_data[_type]:
-                    if "done" not in my_data[_type][_name]:
-                        print("got %s: %s" % (_type, _name))
-                        my_data[_type][_name]["done"] = None
-            await asyncio.sleep(1)
-    tasks += [loop.create_task(task_display())]
+    def display_data(_type, _name, _data):
+        print("got: {} {}".format(_type, _name))
+        print("  data: {}".format(_data))
+    task_exchanges.handler = display_data
+
+    tasks = task_exchanges.run_tasks(loop)
     loop.run_until_complete(asyncio.wait(tasks))
     loop.run_forever()
     loop.close()
