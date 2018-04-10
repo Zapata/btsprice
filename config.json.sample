@@ -1,6 +1,7 @@
 {
     "witness": "",
     "timer_minute": 2,
+    "core_asset": "BTS",
     "asset_list": [
         "BTC", "SILVER", "GOLD", "TRY", "SGD", "HKD", "NZD", "CNY",
         "MXN", "CAD", "CHF", "AUD", "GBP", "JPY", "EUR", "USD", "KRW", "TUSD", "ARS", 

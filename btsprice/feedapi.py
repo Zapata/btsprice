@@ -75,6 +75,7 @@ class FeedApi(object):
             "BTC", "SILVER", "GOLD", "TRY", "SGD", "HKD", "NZD", "CNY",
             "MXN", "CAD", "CHF", "AUD", "GBP", "JPY", "EUR", "USD", "KRW",
             "ARS"]
+        self.core_asset = "BTS"
         self.alias = {}
         self.witness = None
         self.password = ""
@@ -99,6 +100,8 @@ class FeedApi(object):
         self.core_exchange_factor = \
             config["asset_config"]["default"]["core_exchange_factor"]
         self.custom = config["asset_config"]
+        if "core_asset" in config:
+            self.core_asset = config["core_asset"]
 
     def init_chain_info(self):
         if self.witness:
@@ -120,7 +123,7 @@ class FeedApi(object):
             feed_info["maximum_short_squeeze_ratio"] = \
                 custom["maximum_short_squeeze_ratio"]
 
-        quote_precision = self.asset_info["BTS"]["precision"]
+        quote_precision = self.asset_info[self.core_asset]["precision"]
         base_precision = self.asset_info[asset]["precision"]
         price_settle = price * 10**(base_precision - quote_precision)
         if "core_exchange_factor" in custom:
@@ -147,7 +150,7 @@ class FeedApi(object):
         return self.my_feeds
 
     def fetch_asset_info(self):
-        for asset in self.asset_list + ["BTS"] + list(self.alias):
+        for asset in self.asset_list + [self.core_asset] + list(self.alias):
             a = self.rpc.get_asset(asset)
             self.asset_info[asset] = a  # resolve SYMBOL
             self.asset_info[a["id"]] = a  # resolve id
