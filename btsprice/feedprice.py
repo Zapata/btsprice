@@ -67,7 +67,7 @@ class FeedPrice(object):
         loop = asyncio.get_event_loop()
         # init task_exchanges
         task_exchanges = TaskExchanges(self.exchange_data)
-        task_exchanges.set_period(int(self.config["timer_minute"])*60)
+        task_exchanges.set_period(int(float(self.config["timer_minute"])*60))
 
         # init task_pusher
         if self.config["pusher"]["enable"]:
@@ -77,7 +77,7 @@ class FeedPrice(object):
                 login_info = self.config["pusher"]
             task_pusher = TaskPusher(self.exchange_data)
             task_pusher.topic = topic
-            task_pusher.set_expired(self.config["timer_minute"]*60+30)
+            task_pusher.set_expired(int(float(self.config["timer_minute"])*60+30))
             if "publish" in self.config["pusher"]:
                 def publish_data(_type, _name, _data):
                     # print("publish: %s %s" % (_type, _name))
@@ -282,7 +282,7 @@ class FeedPrice(object):
             self.feedapi.publish_feed(feed_need_publish)
 
     async def run_task(self):
-        config_timer = int(self.config["timer_minute"])*60
+        config_timer = int(float(self.config["timer_minute"])*60)
         while True:
             try:
                 self.task_get_price()
